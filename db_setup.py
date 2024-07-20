@@ -15,12 +15,12 @@ def setup_db():
     # Create tables if they don't exist
     session.execute(text('''
         CREATE TABLE IF NOT EXISTS contractors (
-            id INTEGER PRIMARY KEY,
             name TEXT NOT NULL,
             number TEXT NOT NULL,
             city TEXT NOT NULL,
             service TEXT NOT NULL,
-            feedback TEXT
+            feedback TEXT,
+            PRIMARY KEY (name, number)
         )
     '''))
     session.execute(text('''
@@ -40,5 +40,19 @@ def setup_db():
             service_name TEXT NOT NULL UNIQUE
         )
     '''))
+
+    # Add default service categories
+    default_services = [
+        "Plumbing", "Electrician", "Painting", "Carpentry", "AC Repair",
+        "Pest Control", "Deep Cleaning", "Home Tutoring", "Packers Movers",
+        "Tiling Work", "RO Service", "Geyser Repair", "Interior Design",
+        "False Ceiling", "Home Salon"
+    ]
+
+    for service in default_services:
+        session.execute(text('''
+            INSERT OR IGNORE INTO services (service_name) VALUES (:service_name)
+        '''), {"service_name": service})
+
     session.commit()
     session.close()

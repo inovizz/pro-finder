@@ -4,45 +4,43 @@ import db_setup
 
 db_setup.setup_db()
 
-# Collapse the sidebar by default and hide the collapse button
-st.set_page_config(initial_sidebar_state="collapsed")
-st.markdown(
-    """
-    <style>
-        [data-testid="collapsedControl"] {
-            display: none;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+# Set page config
+st.set_page_config(layout="wide", page_title="Pro Finder", initial_sidebar_state="collapsed")
 
-# Add title and logo
+# Add custom CSS
 st.markdown(
     """
     <style>
     .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
         display: flex;
-        flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
         background-color: #0073e6;
-        padding: 10px;
-        width: 100%;
+        padding: 1rem;
+        z-index: 1000000;  /* Increase z-index */
     }
     .navbar a {
         color: white;
         text-decoration: none;
-        padding: 10px;
-        margin: 0 5px;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        transition: background-color 0.3s;
     }
     .navbar a:hover {
         background-color: #005bb5;
     }
-    .navbar .buttons {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
+    .app-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+    }
+    .content {
+        margin-top: 6rem;
+        padding: 1rem;
     }
     .footer {
         position: fixed;
@@ -54,36 +52,28 @@ st.markdown(
         text-align: center;
         padding: 10px;
     }
-    .logo {
-        height: 50px;
+    .stButton > button {
+        background-color: #0073e6;
+        color: white;
     }
-    .main-content {
-        width: 100%;
-        padding: 20px;
-        box-sizing: border-box;
-    }
-    @media (max-width: 768px) {
-        .navbar {
-            flex-direction: column;
-        }
-        .navbar .buttons {
-            flex-direction: column;
-            width: 100%;
-        }
-        .navbar a {
-            width: 100%;
-            text-align: center;
-            margin: 5px 0;
-        }
+    .stTextInput > div > div > input {
+        background-color: #f0f2f6;
     }
     </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Navigation
+st.markdown(
+    """
     <div class="navbar">
-        <img src="logo.png" class="logo">
-        <div class="buttons">
-            <a href="?page=Home">Home</a>
-            <a href="?page=SubmitContractor">Submit Contractor</a>
-            <a href="?page=AddServiceCategory">Add New Service Category</a>
-            <a href="?page=AdminPage">Admin Page</a>
+        <div class="app-title">Pro Finder</div>
+        <div>
+            <a href="/" target="_self">Home</a>
+            <a href="/?page=SubmitContractor" target="_self">Submit Contractor</a>
+            <a href="/?page=AddServiceCategory" target="_self">Add New Service Category</a>
+            <a href="/?page=AdminPage" target="_self">Admin Page</a>
         </div>
     </div>
     """,
@@ -95,26 +85,23 @@ query_params = st.experimental_get_query_params()
 page = query_params.get("page", ["Home"])[0]
 
 # Main content div
-st.markdown('<div class="main-content">', unsafe_allow_html=True)
-
-# Display the selected page
-if page == "Home":
-    home_page.display()
-elif page == "SubmitContractor":
-    submit_contractor_page.display()
-elif page == "AddServiceCategory":
-    add_service_category_page.display()
-elif page == "AdminPage":
-    admin_page.display()
-
-# Close main content div
-st.markdown('</div>', unsafe_allow_html=True)
+with st.container():
+    st.markdown('<div class="content">', unsafe_allow_html=True)
+    if page == "Home":
+        home_page.display()
+    elif page == "SubmitContractor":
+        submit_contractor_page.display()
+    elif page == "AddServiceCategory":
+        add_service_category_page.display()
+    elif page == "AdminPage":
+        admin_page.display()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Footer
 st.markdown(
     """
     <div class="footer">
-        <p>Developed with <3 by <a href="https://linkedin.com/in/inovizz" target="_blank">Sanchit</a> | <a href="https://inovizz.com" target="_blank">Portfolio</a></p>
+        <p>Developed with ❤️ by <a href="https://linkedin.com/in/inovizz" target="_blank">Sanchit</a> | <a href="https://inovizz.com" target="_blank">Portfolio</a></p>
     </div>
     """,
     unsafe_allow_html=True
