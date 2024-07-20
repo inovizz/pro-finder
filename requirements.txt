@@ -1,0 +1,7 @@
+streamlit==1.14.0
+pandas==1.4.3
+sqlalchemy==1.4.31
+python-dotenv==0.21.0
+numpy==1.23.1
+altair==4.2.0
+protobuf==3.20.1
