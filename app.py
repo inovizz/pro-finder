@@ -20,8 +20,8 @@ st.markdown(
         justify-content: space-between;
         align-items: center;
         background-color: #0073e6;
-        padding: 1rem;
-        z-index: 1000000;  /* Increase z-index */
+        padding: 0.5rem 1rem;  /* Reduced padding */
+        z-index: 1000000;
     }
     .navbar a {
         color: white;
@@ -39,9 +39,14 @@ st.markdown(
         color: white;
     }
     .content {
-        margin-top: 6rem;
-        padding: 1rem;
+        margin-top: 3rem;  /* Reduced margin-top */
+        padding-top: 1rem;  /* Added padding-top */
     }
+    
+    h1, h2, h3, h4, h5, h6 {
+        margin-bottom: 0.5rem;  /* Reduce bottom margin of headers */
+    }
+    
     .footer {
         position: fixed;
         left: 0;
@@ -56,6 +61,12 @@ st.markdown(
         color: #0073e6;
         text-decoration: none;
     }
+    
+    /* Reduce space between Streamlit elements */
+    .stButton, .stSelectbox, .stTextInput, .stTextArea {
+        margin-bottom: 0.5rem !important;
+    }
+    
     .stButton > button {
         background-color: #0073e6;
         color: white;
