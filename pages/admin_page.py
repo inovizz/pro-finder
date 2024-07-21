@@ -20,7 +20,7 @@ def display():
                 if username == st.secrets["admin"]["admin_username"] and password == st.secrets["admin"]["admin_password"]:
                     st.session_state["admin_logged_in"] = True
                     st.success("Logged in successfully")
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     st.error("Invalid credentials")
 
@@ -33,7 +33,7 @@ def display():
         if not suggestions:
             st.write("No service suggestions found.")
         else:
-            df = pd.DataFrame(suggestions, columns=columns)
+            df = pd.DataFrame([dict(zip(columns, row)) for row in suggestions])
             st.dataframe(df)
 
             for i, suggestion in df.iterrows():
@@ -42,26 +42,36 @@ def display():
                     if st.button(f"Approve {suggestion['suggested_service']}", key=f"approve_{suggestion['id']}"):
                         # Insert approved suggestion into contractors
                         session.execute(text('''
-                            INSERT INTO contractors (name, number, city, service, feedback) 
+                            INSERT INTO contractors (name, number, city, service, feedback)
                             VALUES (:name, :number, :city, :service, :feedback)
-                        '''), {"name": suggestion["name"], "number": suggestion["number"], 
-                               "city": suggestion["city"], "service": suggestion["suggested_service"], 
+                        '''), {"name": suggestion["name"], "number": suggestion["number"],
+                               "city": suggestion["city"], "service": suggestion["suggested_service"],
                                "feedback": suggestion["feedback"]})
                         session.execute(text("DELETE FROM service_suggestions WHERE id = :id"), {"id": suggestion["id"]})
                         session.commit()
                         st.success(f"Approved and added {suggestion['suggested_service']} to contractors")
-                        st.experimental_rerun()
-
+                        st.rerun()
                 with col2:
                     if st.button(f"Reject {suggestion['suggested_service']}", key=f"reject_{suggestion['id']}"):
                         # Delete from suggestions table
                         session.execute(text("DELETE FROM service_suggestions WHERE id = :id"), {"id": suggestion["id"]})
                         session.commit()
                         st.success(f"Rejected {suggestion['suggested_service']}")
-                        st.experimental_rerun()
+                        st.rerun()
+        
+        st.header("Feature Suggestions")
+        result = session.execute(text("SELECT * FROM feature_suggestions ORDER BY timestamp DESC"))
+        feature_suggestions = result.fetchall()
+        columns = result.keys()
+
+        if not feature_suggestions:
+            st.write("No feature suggestions found.")
+        else:
+            df = pd.DataFrame([dict(zip(columns, row)) for row in feature_suggestions])
+            st.dataframe(df)
 
         if st.button("Logout", key="admin_logout"):
             st.session_state["admin_logged_in"] = False
-            st.experimental_rerun()
+            st.rerun()
 
     session.close()

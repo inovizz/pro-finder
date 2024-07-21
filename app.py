@@ -1,5 +1,5 @@
 import streamlit as st
-from pages import home_page, submit_contractor_page, add_service_category_page, admin_page
+from pages import home_page, submit_contractor_page, add_service_category_page, admin_page, feature_suggestion_page
 import db_setup
 
 db_setup.setup_db()
@@ -52,6 +52,10 @@ st.markdown(
         text-align: center;
         padding: 10px;
     }
+    .footer a {
+        color: #0073e6;
+        text-decoration: none;
+    }
     .stButton > button {
         background-color: #0073e6;
         color: white;
@@ -81,8 +85,7 @@ st.markdown(
 )
 
 # Get the current page from the query parameters
-query_params = st.experimental_get_query_params()
-page = query_params.get("page", ["Home"])[0]
+page = st.query_params.get("page", "Home")
 
 # Main content div
 with st.container():
@@ -95,13 +98,17 @@ with st.container():
         add_service_category_page.display()
     elif page == "AdminPage":
         admin_page.display()
+    elif page == "SuggestFeature":
+        feature_suggestion_page.display()
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Footer
 st.markdown(
     """
     <div class="footer">
-        <p>Developed with ❤️ by <a href="https://linkedin.com/in/inovizz" target="_blank">Sanchit</a> | <a href="https://inovizz.com" target="_blank">Portfolio</a></p>
+        <p>Developed with ❤️ by <a href="https://linkedin.com/in/inovizz" target="_blank">Sanchit</a> | 
+        <a href="https://inovizz.com" target="_blank">Portfolio</a> | 
+        <a href="/?page=SuggestFeature" target="_self">Suggest a Feature</a></p>
     </div>
     """,
     unsafe_allow_html=True

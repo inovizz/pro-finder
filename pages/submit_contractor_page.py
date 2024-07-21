@@ -37,7 +37,7 @@ def display():
                     result = session.execute(text('''
                         SELECT * FROM contractors WHERE name = :name AND number = :number
                     '''), {"name": name, "number": number})
-                    if result.fetchone():
+                    if result.first():
                         st.error("A contractor with this name and number already exists.")
                     else:
                         if selected_service == "Other":
@@ -65,7 +65,7 @@ def display():
 def get_services():
     session = Session()
     result = session.execute(text("SELECT service_name FROM services"))
-    services = [row['service_name'] for row in result.fetchall()]
+    services = [row[0] for row in result.fetchall()]  # Changed this line
     session.close()
     if not services:
         services = ["Plumbing", "Tiles", "False Ceiling", "Mesh Door", "Painting", "Electrical Work", "Carpentry", "Flooring", "Masonry", "HVAC", "Landscaping", "Cleaning", "Pest Control"]

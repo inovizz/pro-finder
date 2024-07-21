@@ -40,6 +40,14 @@ def setup_db():
             service_name TEXT NOT NULL UNIQUE
         )
     '''))
+    
+    session.execute(text('''
+        CREATE TABLE IF NOT EXISTS feature_suggestions (
+            id INTEGER PRIMARY KEY,
+            suggestion TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    '''))
 
     # Add default service categories
     default_services = [

@@ -32,7 +32,7 @@ def display():
     result = session.execute(text(query), params)
     rows = result.fetchall()
     columns = result.keys()
-    df = pd.DataFrame(rows, columns=columns)
+    df = pd.DataFrame([dict(zip(columns, row)) for row in rows])
 
     st.data_editor(
         df,
@@ -55,7 +55,7 @@ def display():
 def get_services():
     session = Session()
     result = session.execute(text("SELECT service_name FROM services"))
-    services = [row['service_name'] for row in result.fetchall()]
+    services = [row[0] for row in result.fetchall()]  # Changed this line
     session.close()
     if not services:
         services = ["Plumbing", "Tiles", "False Ceiling", "Mesh Door", "Painting", "Electrical Work", "Carpentry", "Flooring", "Masonry", "HVAC", "Landscaping", "Cleaning", "Pest Control"]
