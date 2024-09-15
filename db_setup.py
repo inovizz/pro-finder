@@ -1,66 +1,62 @@
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
-import os
+import streamlit as st
+from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+import asyncio
+import threading
 
-# Load environment variables from .env file
-load_dotenv()
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///pro_finder.db")
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-Session = sessionmaker(bind=engine)
+def get_spreadsheet_id():
+    return st.secrets["google_sheets"]["spreadsheet_id"]
 
-def setup_db():
-    session = Session()
-    # Create tables if they don't exist
-    session.execute(text('''
-        CREATE TABLE IF NOT EXISTS contractors (
-            name TEXT NOT NULL,
-            number TEXT NOT NULL,
-            city TEXT NOT NULL,
-            service TEXT NOT NULL,
-            feedback TEXT,
-            PRIMARY KEY (name, number)
-        )
-    '''))
-    session.execute(text('''
-        CREATE TABLE IF NOT EXISTS service_suggestions (
-            id INTEGER PRIMARY KEY,
-            suggested_service TEXT NOT NULL UNIQUE,
-            name TEXT NOT NULL,
-            number TEXT NOT NULL,
-            city TEXT NOT NULL,
-            price REAL NOT NULL,
-            feedback TEXT
-        )
-    '''))
-    session.execute(text('''
-        CREATE TABLE IF NOT EXISTS services (
-            id INTEGER PRIMARY KEY,
-            service_name TEXT NOT NULL UNIQUE
-        )
-    '''))
+def get_sheets_service():
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=SCOPES
+    )
+    service = build('sheets', 'v4', credentials=creds)
+    return service.spreadsheets()
+
+async def setup_sheets():
+    sheets = get_sheets_service()
+    spreadsheet_id = get_spreadsheet_id()
     
-    session.execute(text('''
-        CREATE TABLE IF NOT EXISTS feature_suggestions (
-            id INTEGER PRIMARY KEY,
-            suggestion TEXT NOT NULL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    '''))
+    required_sheets = ['contractors', 'service_suggestions', 'services', 'feature_suggestions']
+    
+    try:
+        spreadsheet = sheets.get(spreadsheetId=spreadsheet_id).execute()
+        existing_sheets = [sheet['properties']['title'] for sheet in spreadsheet.get('sheets', [])]
+        
+        for sheet_name in required_sheets:
+            if sheet_name not in existing_sheets:
+                sheets.batchUpdate(spreadsheetId=spreadsheet_id, body={
+                    "requests": [{
+                        "addSheet": {
+                            "properties": {
+                                "title": sheet_name
+                            }
+                        }
+                    }]
+                }).execute()
+        
+        await populate_dummy_data_if_empty(sheets, spreadsheet_id)
+        
+    except HttpError as error:
+        st.error(f"An error occurred: {error}")
+        st.error("Please check your Google Sheets setup and try again.")
 
-    # Add default service categories
-    default_services = [
-        "Plumbing", "Electrician", "Painting", "Carpentry", "AC Repair",
-        "Pest Control", "Deep Cleaning", "Home Tutoring", "Packers Movers",
-        "Tiling Work", "RO Service", "Geyser Repair", "Interior Design",
-        "False Ceiling", "Home Salon"
-    ]
+async def populate_dummy_data_if_empty(sheets, spreadsheet_id):
+    from populate_dummy_data import populate_dummy_data
+    
+    result = sheets.values().get(spreadsheetId=spreadsheet_id, range='services!A1:B').execute()
+    if 'values' not in result or len(result['values']) <= 1:  # Only header or empty
+        await populate_dummy_data(spreadsheet_id)
 
-    for service in default_services:
-        session.execute(text('''
-            INSERT OR IGNORE INTO services (service_name) VALUES (:service_name)
-        '''), {"service_name": service})
+def run_async(coro):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    return loop.run_until_complete(coro)
 
-    session.commit()
-    session.close()
+if __name__ == "__main__":
+    run_async(setup_sheets())

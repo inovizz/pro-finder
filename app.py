@@ -1,8 +1,10 @@
 import streamlit as st
-from pages import home_page, submit_contractor_page, add_service_category_page, admin_page, feature_suggestion_page
-import db_setup
+from pages import home_page, submit_contractor_page, add_service_category_page, feature_suggestion_page
+from db_setup import setup_sheets, run_async
+import sheets_operations
 
-db_setup.setup_db()
+# Call setup_sheets at the very beginning
+run_async(setup_sheets())
 
 # Set page config
 st.set_page_config(layout="wide", page_title="Pro Finder", initial_sidebar_state="collapsed")
@@ -20,7 +22,7 @@ st.markdown(
         justify-content: space-between;
         align-items: center;
         background-color: #0073e6;
-        padding: 0.5rem 1rem;  /* Reduced padding */
+        padding: 0.5rem 1rem;
         z-index: 1000000;
     }
     .navbar a {
@@ -39,12 +41,12 @@ st.markdown(
         color: white;
     }
     .content {
-        margin-top: 3rem;  /* Reduced margin-top */
-        padding-top: 1rem;  /* Added padding-top */
+        margin-top: 3rem;
+        padding-top: 1rem;
     }
     
     h1, h2, h3, h4, h5, h6 {
-        margin-bottom: 0.5rem;  /* Reduce bottom margin of headers */
+        margin-bottom: 0.5rem;
     }
     
     .footer {
@@ -62,7 +64,6 @@ st.markdown(
         text-decoration: none;
     }
     
-    /* Reduce space between Streamlit elements */
     .stButton, .stSelectbox, .stTextInput, .stTextArea {
         margin-bottom: 0.5rem !important;
     }
@@ -88,7 +89,6 @@ st.markdown(
             <a href="/" target="_self">Home</a>
             <a href="/?page=SubmitContractor" target="_self">Submit Contractor</a>
             <a href="/?page=AddServiceCategory" target="_self">Add New Service Category</a>
-            <a href="/?page=AdminPage" target="_self">Admin Page</a>
         </div>
     </div>
     """,
@@ -107,8 +107,6 @@ with st.container():
         submit_contractor_page.display()
     elif page == "AddServiceCategory":
         add_service_category_page.display()
-    elif page == "AdminPage":
-        admin_page.display()
     elif page == "SuggestFeature":
         feature_suggestion_page.display()
     st.markdown('</div>', unsafe_allow_html=True)

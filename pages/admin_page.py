@@ -1,11 +1,9 @@
 import streamlit as st
-from db_setup import Session
-from sqlalchemy import text
+from sheets_operations import read_sheet, append_to_sheet, delete_from_sheet
 import pandas as pd
 
 def display():
     st.header("Admin Login")
-    session = Session()
 
     if "admin_logged_in" not in st.session_state:
         st.session_state["admin_logged_in"] = False
@@ -26,52 +24,39 @@ def display():
 
     if st.session_state["admin_logged_in"]:
         st.header("Review Service Suggestions")
-        result = session.execute(text("SELECT * FROM service_suggestions"))
-        suggestions = result.fetchall()
-        columns = result.keys()
+        df_suggestions = read_sheet('service_suggestions')
 
-        if not suggestions:
+        if df_suggestions.empty:
             st.write("No service suggestions found.")
         else:
-            df = pd.DataFrame([dict(zip(columns, row)) for row in suggestions])
-            st.dataframe(df)
+            st.dataframe(df_suggestions)
 
-            for i, suggestion in df.iterrows():
+            for i, suggestion in df_suggestions.iterrows():
                 col1, col2 = st.columns(2)
                 with col1:
                     if st.button(f"Approve {suggestion['suggested_service']}", key=f"approve_{suggestion['id']}"):
                         # Insert approved suggestion into contractors
-                        session.execute(text('''
-                            INSERT INTO contractors (name, number, city, service, feedback)
-                            VALUES (:name, :number, :city, :service, :feedback)
-                        '''), {"name": suggestion["name"], "number": suggestion["number"],
-                               "city": suggestion["city"], "service": suggestion["suggested_service"],
-                               "feedback": suggestion["feedback"]})
-                        session.execute(text("DELETE FROM service_suggestions WHERE id = :id"), {"id": suggestion["id"]})
-                        session.commit()
+                        append_to_sheet('contractors', [suggestion["name"], suggestion["number"],
+                                                        suggestion["city"], suggestion["suggested_service"],
+                                                        suggestion["feedback"]])
+                        delete_from_sheet('service_suggestions', i + 2)  # +2 because sheet is 1-indexed and has a header
                         st.success(f"Approved and added {suggestion['suggested_service']} to contractors")
                         st.rerun()
                 with col2:
                     if st.button(f"Reject {suggestion['suggested_service']}", key=f"reject_{suggestion['id']}"):
-                        # Delete from suggestions table
-                        session.execute(text("DELETE FROM service_suggestions WHERE id = :id"), {"id": suggestion["id"]})
-                        session.commit()
+                        # Delete from suggestions sheet
+                        delete_from_sheet('service_suggestions', i + 2)  # +2 because sheet is 1-indexed and has a header
                         st.success(f"Rejected {suggestion['suggested_service']}")
                         st.rerun()
         
         st.header("Feature Suggestions")
-        result = session.execute(text("SELECT * FROM feature_suggestions ORDER BY timestamp DESC"))
-        feature_suggestions = result.fetchall()
-        columns = result.keys()
+        df_features = read_sheet('feature_suggestions')
 
-        if not feature_suggestions:
+        if df_features.empty:
             st.write("No feature suggestions found.")
         else:
-            df = pd.DataFrame([dict(zip(columns, row)) for row in feature_suggestions])
-            st.dataframe(df)
+            st.dataframe(df_features)
 
         if st.button("Logout", key="admin_logout"):
             st.session_state["admin_logged_in"] = False
             st.rerun()
-
-    session.close()

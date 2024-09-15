@@ -163,6 +163,4 @@ cython_debug/
 
 
 .streamlit/secrets.toml
-
 3.12/
-pro_finder.db

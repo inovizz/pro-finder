@@ -1,39 +1,57 @@
-from db_setup import setup_db, Session
-from sqlalchemy import text
+from db_setup import get_sheets_service
+import asyncio
 
-def populate_dummy_data():
-    setup_db()  # Ensure the database setup is done before populating data
-    session = Session()
+async def populate_dummy_data(spreadsheet_id):
+    sheets = get_sheets_service()
 
-    # Actual data for contractors
+    # Contractors data
     contractors_data = [
-        ("Shival", "9116339639", "Hyderabad", "Carpenter", "Good and reasonable but can do basic work not exposed to complex work yet."),
-        ("Anil", "6306332342", "Hyderabad", "Painter", "Reasonable in rates"),
-        ("Syed S", "9966851213", "Hyderabad", "Mesh Doors", "Good work and decent quality"),
+        ["Name", "Number", "City", "Service", "Feedback"],
+        ["Shival", "9116339639", "Hyderabad", "Carpenter", "Good and reasonable but can do basic work not exposed to complex work yet."],
+        ["Anil", "6306332342", "Hyderabad", "Painter", "Reasonable in rates"],
+        ["Syed S", "9966851213", "Hyderabad", "Mesh Doors", "Good work and decent quality"],
     ]
 
-    # Insert actual data into contractors table
-    for contractor in contractors_data:
-        session.execute(text('''
-            INSERT OR IGNORE INTO contractors (name, number, city, service, feedback) 
-            VALUES (:name, :number, :city, :service, :feedback)
-        '''), {"name": contractor[0], "number": contractor[1], "city": contractor[2], "service": contractor[3], "feedback": contractor[4]})
+    await asyncio.to_thread(
+        sheets.values().update,
+        spreadsheetId=spreadsheet_id,
+        range='contractors!A1',
+        valueInputOption='RAW',
+        body={'values': contractors_data}
+    )
 
-    # We'll keep the service suggestions as they were, but you can update or remove them if you prefer
+    # Service suggestions data
     suggestions_data = [
-        ("Home Tutoring", "Sneha Gupta", "6543210987", "Chennai", 500.0, "Looking for a Math tutor for 10th standard."),
-        ("Interior Design", "Vikram Singh", "5432109876", "Hyderabad", 10000.0, "Need help redesigning my living room."),
+        ["ID", "Suggested Service", "Name", "Number", "City", "Price", "Feedback"],
+        [1, "Home Tutoring", "Sneha Gupta", "6543210987", "Chennai", "500.0", "Looking for a Math tutor for 10th standard."],
+        [2, "Interior Design", "Vikram Singh", "5432109876", "Hyderabad", "10000.0", "Need help redesigning my living room."],
     ]
 
-    # Insert data into service suggestions table
-    for suggestion in suggestions_data:
-        session.execute(text('''
-            INSERT OR IGNORE INTO service_suggestions (suggested_service, name, number, city, price, feedback) 
-            VALUES (:suggested_service, :name, :number, :city, :price, :feedback)
-        '''), {"suggested_service": suggestion[0], "name": suggestion[1], "number": suggestion[2], "city": suggestion[3], "price": suggestion[4], "feedback": suggestion[5]})
+    await asyncio.to_thread(
+        sheets.values().update,
+        spreadsheetId=spreadsheet_id,
+        range='service_suggestions!A1',
+        valueInputOption='RAW',
+        body={'values': suggestions_data}
+    )
 
-    session.commit()
-    session.close()
+    # Services data
+    services_data = [
+        ["ID", "Service Name"],
+        [1, "Plumbing"], [2, "Electrician"], [3, "Painting"], [4, "Carpentry"], [5, "AC Repair"],
+        [6, "Pest Control"], [7, "Deep Cleaning"], [8, "Home Tutoring"], [9, "Packers Movers"],
+        [10, "Tiling Work"], [11, "RO Service"], [12, "Geyser Repair"], [13, "Interior Design"],
+        [14, "False Ceiling"], [15, "Home Salon"]
+    ]
+
+    await asyncio.to_thread(
+        sheets.values().update,
+        spreadsheetId=spreadsheet_id,
+        range='services!A1',
+        valueInputOption='RAW',
+        body={'values': services_data}
+    )
 
 if __name__ == "__main__":
-    populate_dummy_data()
+    from db_setup import get_spreadsheet_id, run_async
+    run_async(populate_dummy_data(get_spreadsheet_id()))

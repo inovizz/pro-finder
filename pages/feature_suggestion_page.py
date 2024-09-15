@@ -1,6 +1,6 @@
 import streamlit as st
-from db_setup import Session
-from sqlalchemy import text
+from sheets_operations import append_to_sheet
+from datetime import datetime
 
 def display():
     st.header("Suggest a Feature")
@@ -10,16 +10,11 @@ def display():
         submit_button = st.form_submit_button("Submit Suggestion")
         
         if submit_button and suggestion:
-            session = Session()
             try:
-                session.execute(text('''
-                    INSERT INTO feature_suggestions (suggestion) VALUES (:suggestion)
-                '''), {"suggestion": suggestion})
-                session.commit()
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                append_to_sheet('feature_suggestions', [suggestion, timestamp])
                 st.success("Thank you for your suggestion!")
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
-            finally:
-                session.close()
 
     st.markdown("[Back to Home](/?page=Home)")
